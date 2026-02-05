@@ -46,11 +46,11 @@ jobs:
         run: |
           git checkout -B ${{ github.event.inputs.target_branch }} origin/main
 
-      # 4️⃣ Write JSON input to file
+      # 4️⃣ Write JSON input to file (FIXED)
       - name: Write integration JSON to file
         run: |
           cat << 'EOF' > int_details.json
-          ${{ github.event.inputs.int_details_json }}
+${{ github.event.inputs.int_details_json }}
           EOF
 
       # 5️⃣ Generate properties file
