@@ -7,25 +7,19 @@ on:
         description: "Environment (qa / uat)"
         required: true
       remarks:
-        description: "Remarks"
         required: true
       domain:
-        description: "Domain"
         required: true
       project_name:
-        description: "Project Name"
         required: true
       onboarding_project_name:
-        description: "Onboarding Project Name"
         required: true
       job_name:
-        description: "Job Name"
         required: true
       int_details_json:
         description: "Paste integration JSON"
         required: true
       target_branch:
-        description: "Target branch"
         required: true
         default: "feature/initial_load"
 
@@ -34,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout main branch
+      # 1️⃣ Checkout main (to get scripts)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -42,14 +36,41 @@ jobs:
           fetch-depth: 0
 
       # 2️⃣ Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3️⃣ Save JSON input to file (CRITICAL STEP)
+      # 3️⃣ Switch to target branch FIRST
+      - name: Switch to target branch
+        run: |
+          git checkout ${{ github.event.inputs.target_branch }} \
+          || git checkout -b ${{ github.event.inputs.target_branch }}
+
+      # 4️⃣ Save JSON input
       - name: Write integration JSON to file
         run: |
           cat << 'EOF' > int_details.json
           ${{ github.event.inputs.int_details_json }}
           EOF
+
+      # 5️⃣ Generate properties file (NOW IT STAYS)
+      - name: Generate properties
+        env:
+          ENV: ${{ github.event.inputs.env }}
+          REMARKS: ${{ github.event.inputs.remarks }}
+          DOMAIN: ${{ github.event.inputs.domain }}
+          PROJECT_NAME: ${{ github.event.inputs.project_name }}
+          ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
+          JOB_NAME: ${{ github.event.inputs.job_name }}
+        run: |
+          python scripts/generate_properties.py
+
+      # 6️⃣ Commit and push
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add *.properties
+          git commit -m "Add ${{ github.event.inputs.env }} properties"
+          git push origin ${{ github.event.inputs.target_branch }}
