@@ -28,32 +28,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout main (get script)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
-      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3️⃣ Create feature branch FROM main
       - name: Create feature branch from main
         run: |
           git checkout -B ${{ github.event.inputs.target_branch }} origin/main
 
-      # 4️⃣ Write JSON input to file (FIXED)
       - name: Write integration JSON to file
         run: |
-          cat << 'EOF' > int_details.json
-${{ github.event.inputs.int_details_json }}
-          EOF
+          printf "%s\n" "${{ github.event.inputs.int_details_json }}" > int_details.json
 
-      # 5️⃣ Generate properties file
       - name: Generate properties
         env:
           ENV: ${{ github.event.inputs.env }}
@@ -65,7 +58,6 @@ ${{ github.event.inputs.int_details_json }}
         run: |
           python scripts/generate_properties.py
 
-      # 6️⃣ Commit ONLY properties file
       - name: Commit and push
         run: |
           git config user.name "github-actions"
