@@ -56,7 +56,7 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.project_name }}
           ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
           JOB_NAME: ${{ github.event.inputs.job_name }}
-          INT_DETAILS_JSON: ${{ github.event.inputs.int_details_json }}
+          INT_DETAILS_JSON_B64: ${{ github.event.inputs.int_details_json }}
         run: |
           python scripts/generate_properties.py
 
