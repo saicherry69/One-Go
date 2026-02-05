@@ -1,4 +1,4 @@
-name: Generate Properties (Main → Feature Branch)
+name: Generate Properties (Main → Feature)
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout main (to get scripts)
+      # 1️⃣ Checkout main (get script)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -36,24 +36,24 @@ jobs:
           fetch-depth: 0
 
       # 2️⃣ Setup Python
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3️⃣ Switch to target branch FIRST
-      - name: Switch to target branch
+      # 3️⃣ Create feature branch FROM main
+      - name: Create feature branch from main
         run: |
-          git checkout ${{ github.event.inputs.target_branch }} \
-          || git checkout -b ${{ github.event.inputs.target_branch }}
+          git checkout -B ${{ github.event.inputs.target_branch }} origin/main
 
-      # 4️⃣ Save JSON input
+      # 4️⃣ Write JSON input to file
       - name: Write integration JSON to file
         run: |
           cat << 'EOF' > int_details.json
           ${{ github.event.inputs.int_details_json }}
           EOF
 
-      # 5️⃣ Generate properties file (NOW IT STAYS)
+      # 5️⃣ Generate properties file
       - name: Generate properties
         env:
           ENV: ${{ github.event.inputs.env }}
@@ -65,7 +65,7 @@ jobs:
         run: |
           python scripts/generate_properties.py
 
-      # 6️⃣ Commit and push
+      # 6️⃣ Commit ONLY properties file
       - name: Commit and push
         run: |
           git config user.name "github-actions"
