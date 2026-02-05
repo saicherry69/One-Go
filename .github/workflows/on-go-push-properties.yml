@@ -17,7 +17,7 @@ on:
       job_name:
         required: true
       int_details_json:
-        description: "Paste integration JSON"
+        description: "Paste full integration JSON"
         required: true
       target_branch:
         required: true
@@ -28,26 +28,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout MAIN (script exists here)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+      # 3️⃣ Create / reset feature branch from main
       - name: Create feature branch from main
         run: |
           git checkout -B ${{ github.event.inputs.target_branch }} origin/main
 
+      # 4️⃣ Write JSON input EXACTLY as pasted
       - name: Write integration JSON to file
         run: |
-          printf "%s\n" "${{ github.event.inputs.int_details_json }}" > int_details.json
+          printf "%s" "${{ github.event.inputs.int_details_json }}" > int_details.json
 
-      - name: Generate properties
+      # 5️⃣ Run Python script (from main)
+      - name: Generate properties file
         env:
           ENV: ${{ github.event.inputs.env }}
           REMARKS: ${{ github.event.inputs.remarks }}
@@ -58,7 +63,8 @@ jobs:
         run: |
           python scripts/generate_properties.py
 
-      - name: Commit and push
+      # 6️⃣ Commit ONLY the properties file
+      - name: Commit and push properties file
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
