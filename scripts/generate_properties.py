@@ -1,41 +1,43 @@
 import os
 import json
-import base64
+from pathlib import Path
 
-raw_b64 = os.environ.get("INT_DETAILS_JSON_B64")
+# Read simple inputs from env vars
+env = os.environ["ENV"]
+remarks = os.environ["REMARKS"]
+domain = os.environ["DOMAIN"]
+project_name = os.environ["PROJECT_NAME"]
+onboarding_project_name = os.environ["ONBOARDING_PROJECT_NAME"]
+job_name = os.environ["JOB_NAME"]
 
-if not raw_b64:
-    raise Exception("INT_DETAILS_JSON_B64 is missing")
+# Read integration JSON from file
+json_path = Path("int_details.json")
+
+if not json_path.exists():
+    raise Exception("int_details.json file not found")
 
 try:
-    decoded_json = base64.b64decode(raw_b64).decode("utf-8")
-    int_details = json.loads(decoded_json)
-except Exception as e:
-    raise Exception(f"Invalid JSON input after base64 decode: {e}")
-
-# Validate JSON
-try:
-    int_details = json.loads(raw_json)
+    with open(json_path, "r", encoding="utf-8") as f:
+        int_details = json.load(f)
 except json.JSONDecodeError as e:
     raise Exception(f"Invalid JSON input: {e}")
 
-int_details_string = json.dumps(int_details)
+# Convert JSON object to single-line string for properties file
+int_details_string = json.dumps(int_details, separators=(",", ":"))
 
-# File name based on env
+# Create properties file
 file_name = f"{env}.properties"
 file_path = Path(file_name)
 
-content = f"""
-env={env}
+content = f"""env={env}
 onboarding_project_Name={onboarding_project_name}
 Job_name={job_name}
 intDetails="{int_details_string}"
 Remarks={remarks}
 domain={domain}
 project_Name={project_name}
-""".strip()
+"""
 
-with open(file_path, "w") as f:
-    f.write(content)
+file_path.write_text(content)
 
 print(f"{file_name} created successfully")
