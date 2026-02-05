@@ -1,10 +1,10 @@
-name: Generate Properties File
+name: Generate Environment Properties
 
 on:
   workflow_dispatch:
     inputs:
       env:
-        description: "Environment (  qa /dev / uat /pre-prod / prod / dr )"
+        description: "Environment (qa / uat)"
         required: true
       remarks:
         description: "Remarks"
@@ -21,20 +21,23 @@ on:
       job_name:
         description: "Job Name"
         required: true
-      file_path:
-        description: "Path where properties file will be created"
-        required: true
       int_details_json:
         description: "Integration details JSON"
         required: true
+      target_branch:
+        description: "Target branch"
+        required: true
+        default: "feature/initial_load"
 
 jobs:
-  generate-properties:
+  generate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout target branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_branch }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -49,15 +52,14 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.project_name }}
           ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
           JOB_NAME: ${{ github.event.inputs.job_name }}
-          FILE_PATH: ${{ github.event.inputs.file_path }}
           INT_DETAILS_JSON: ${{ github.event.inputs.int_details_json }}
         run: |
           python scripts/generate_properties.py
 
-      - name: Commit and push generated file
+      - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add .
-          git commit -m "Generated properties file"
+          git commit -m "Add ${{ github.event.inputs.env }} properties"
           git push
