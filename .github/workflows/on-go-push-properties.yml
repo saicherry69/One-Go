@@ -1,1 +1,63 @@
-lets start
+name: Generate Properties File
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment (  qa /dev / uat /pre-prod / prod / dr )"
+        required: true
+      remarks:
+        description: "Remarks"
+        required: true
+      domain:
+        description: "Domain"
+        required: true
+      project_name:
+        description: "Project Name"
+        required: true
+      onboarding_project_name:
+        description: "Onboarding Project Name"
+        required: true
+      job_name:
+        description: "Job Name"
+        required: true
+      file_path:
+        description: "Path where properties file will be created"
+        required: true
+      int_details_json:
+        description: "Integration details JSON"
+        required: true
+
+jobs:
+  generate-properties:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Generate properties file
+        env:
+          ENV: ${{ github.event.inputs.env }}
+          REMARKS: ${{ github.event.inputs.remarks }}
+          DOMAIN: ${{ github.event.inputs.domain }}
+          PROJECT_NAME: ${{ github.event.inputs.project_name }}
+          ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
+          JOB_NAME: ${{ github.event.inputs.job_name }}
+          FILE_PATH: ${{ github.event.inputs.file_path }}
+          INT_DETAILS_JSON: ${{ github.event.inputs.int_details_json }}
+        run: |
+          python scripts/generate_properties.py
+
+      - name: Commit and push generated file
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Generated properties file"
+          git push
