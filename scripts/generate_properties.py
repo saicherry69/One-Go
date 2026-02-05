@@ -11,6 +11,11 @@ job_name = os.environ["JOB_NAME"]
 
 raw_json = os.environ["INT_DETAILS_JSON"].strip()
 
+if (raw_json.startswith("'") and raw_json.endswith("'")) or \
+   (raw_json.startswith('"') and raw_json.endswith('"')):
+    raw_json = raw_json[1:-1].strip()
+
+
 # 1️⃣ Validate JSON
 try:
     int_details = json.loads(raw_json)
