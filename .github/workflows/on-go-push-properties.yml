@@ -1,10 +1,9 @@
-name: Generate Properties (Main → Feature)
+name: Generate Properties
 
 on:
   workflow_dispatch:
     inputs:
       env:
-        description: "Environment (qa / uat)"
         required: true
       remarks:
         required: true
@@ -17,18 +16,18 @@ on:
       job_name:
         required: true
       int_details_json:
-        description: "Paste full integration JSON"
+        description: "Paste raw JSON"
         required: true
       target_branch:
-        required: true
         default: "feature/initial_load"
+        required: true
 
 jobs:
   generate:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout MAIN (script exists here)
+      # 1️⃣ Checkout MAIN (script lives here)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -41,18 +40,13 @@ jobs:
         with:
           python-version: "3.10"
 
-      # 3️⃣ Create / reset feature branch from main
-      - name: Create feature branch from main
+      # 3️⃣ Create feature branch FROM main
+      - name: Create feature branch
         run: |
           git checkout -B ${{ github.event.inputs.target_branch }} origin/main
 
-      # 4️⃣ Write JSON input EXACTLY as pasted
-      - name: Write integration JSON to file
-        run: |
-          printf "%s" "${{ github.event.inputs.int_details_json }}" > int_details.json
-
-      # 5️⃣ Run Python script (from main)
-      - name: Generate properties file
+      # 4️⃣ Generate properties file (JSON via ENV)
+      - name: Generate properties
         env:
           ENV: ${{ github.event.inputs.env }}
           REMARKS: ${{ github.event.inputs.remarks }}
@@ -60,11 +54,12 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.project_name }}
           ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
           JOB_NAME: ${{ github.event.inputs.job_name }}
+          INT_DETAILS_JSON: ${{ github.event.inputs.int_details_json }}
         run: |
           python scripts/generate_properties.py
 
-      # 6️⃣ Commit ONLY the properties file
-      - name: Commit and push properties file
+      # 5️⃣ Commit ONLY the properties file
+      - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
