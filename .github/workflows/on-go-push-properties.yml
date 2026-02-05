@@ -22,7 +22,7 @@ on:
         description: "Job Name"
         required: true
       int_details_json:
-        description: "Integration details JSON"
+        description: "Paste integration JSON"
         required: true
       target_branch:
         description: "Target branch"
@@ -34,8 +34,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout MAIN branch (script lives here)
-      - name: Checkout main branch
+      # 1️⃣ Checkout main branch
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
@@ -47,30 +47,9 @@ jobs:
         with:
           python-version: "3.10"
 
-      # 3️⃣ Run Python script (from main)
-      - name: Generate properties file
-        env:
-          ENV: ${{ github.event.inputs.env }}
-          REMARKS: ${{ github.event.inputs.remarks }}
-          DOMAIN: ${{ github.event.inputs.domain }}
-          PROJECT_NAME: ${{ github.event.inputs.project_name }}
-          ONBOARDING_PROJECT_NAME: ${{ github.event.inputs.onboarding_project_name }}
-          JOB_NAME: ${{ github.event.inputs.job_name }}
-          INT_DETAILS_JSON_B64: ${{ github.event.inputs.int_details_json }}
+      # 3️⃣ Save JSON input to file (CRITICAL STEP)
+      - name: Write integration JSON to file
         run: |
-          python scripts/generate_properties.py
-
-      # 4️⃣ Switch to target branch (create if missing)
-      - name: Switch to target branch
-        run: |
-          git checkout ${{ github.event.inputs.target_branch }} \
-          || git checkout -b ${{ github.event.inputs.target_branch }}
-
-      # 5️⃣ Commit generated file to target branch
-      - name: Commit and push
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add *.properties
-          git commit -m "Add ${{ github.event.inputs.env }} properties"
-          git push origin ${{ github.event.inputs.target_branch }}
+          cat << 'EOF' > int_details.json
+          ${{ github.event.inputs.int_details_json }}
+          EOF
