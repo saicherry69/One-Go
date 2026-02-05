@@ -2,22 +2,26 @@ import json
 import os
 from pathlib import Path
 
-env = os.environ["ENV"]
+env = os.environ["ENV"].lower()
 remarks = os.environ["REMARKS"]
 domain = os.environ["DOMAIN"]
 project_name = os.environ["PROJECT_NAME"]
 onboarding_project_name = os.environ["ONBOARDING_PROJECT_NAME"]
 job_name = os.environ["JOB_NAME"]
-file_path = os.environ["FILE_PATH"]
 
 raw_json = os.environ["INT_DETAILS_JSON"]
 
+# Validate JSON
 try:
     int_details = json.loads(raw_json)
 except json.JSONDecodeError as e:
     raise Exception(f"Invalid JSON input: {e}")
 
 int_details_string = json.dumps(int_details)
+
+# File name based on env
+file_name = f"{env}.properties"
+file_path = Path(file_name)
 
 content = f"""
 env={env}
@@ -29,10 +33,7 @@ domain={domain}
 project_Name={project_name}
 """.strip()
 
-path = Path(file_path)
-path.parent.mkdir(parents=True, exist_ok=True)
-
-with open(path, "w") as f:
+with open(file_path, "w") as f:
     f.write(content)
 
-print(f"Properties file created at {file_path}")
+print(f"{file_name} created successfully")
