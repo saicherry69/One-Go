@@ -1,15 +1,17 @@
-import json
 import os
-from pathlib import Path
+import json
+import base64
 
-env = os.environ["ENV"].lower()
-remarks = os.environ["REMARKS"]
-domain = os.environ["DOMAIN"]
-project_name = os.environ["PROJECT_NAME"]
-onboarding_project_name = os.environ["ONBOARDING_PROJECT_NAME"]
-job_name = os.environ["JOB_NAME"]
+raw_b64 = os.environ.get("INT_DETAILS_JSON_B64")
 
-raw_json = os.environ["INT_DETAILS_JSON"]
+if not raw_b64:
+    raise Exception("INT_DETAILS_JSON_B64 is missing")
+
+try:
+    decoded_json = base64.b64decode(raw_b64).decode("utf-8")
+    int_details = json.loads(decoded_json)
+except Exception as e:
+    raise Exception(f"Invalid JSON input after base64 decode: {e}")
 
 # Validate JSON
 try:
