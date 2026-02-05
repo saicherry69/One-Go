@@ -1,4 +1,4 @@
-name: Generate Environment Properties
+name: Generate Properties (Main → Feature Branch)
 
 on:
   workflow_dispatch:
@@ -34,16 +34,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout target branch
+      # 1️⃣ Checkout MAIN branch (script lives here)
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.target_branch }}
+          ref: main
+          fetch-depth: 0
 
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+      # 3️⃣ Run Python script (from main)
       - name: Generate properties file
         env:
           ENV: ${{ github.event.inputs.env }}
@@ -56,10 +60,17 @@ jobs:
         run: |
           python scripts/generate_properties.py
 
+      # 4️⃣ Switch to target branch (create if missing)
+      - name: Switch to target branch
+        run: |
+          git checkout ${{ github.event.inputs.target_branch }} \
+          || git checkout -b ${{ github.event.inputs.target_branch }}
+
+      # 5️⃣ Commit generated file to target branch
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add .
+          git add *.properties
           git commit -m "Add ${{ github.event.inputs.env }} properties"
-          git push
+          git push origin ${{ github.event.inputs.target_branch }}
