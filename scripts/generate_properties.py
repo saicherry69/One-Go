@@ -11,10 +11,10 @@ job_name = os.environ["JOB_NAME"]
 
 raw_json = os.environ["INT_DETAILS_JSON"].strip()
 
+# Remove accidental wrapping quotes
 if (raw_json.startswith("'") and raw_json.endswith("'")) or \
    (raw_json.startswith('"') and raw_json.endswith('"')):
-    raw_json = raw_json[1:-1].strip()
-
+    raw_json = raw_json[1:-1]
 
 # 1️⃣ Validate JSON
 try:
@@ -22,14 +22,14 @@ try:
 except json.JSONDecodeError as e:
     raise Exception(f"Invalid JSON input: {e}")
 
-# 2️⃣ Convert JSON → string with escaped quotes & slashes
-json_string = json.dumps(int_details)
-json_string = json_string.replace("\\", "\\\\").replace('"', '\\"')
+# 2️⃣ Properly serialize JSON (json.dumps already escapes correctly)
+json_string = json.dumps(int_details, separators=(",", ":"))
 
-# 3️⃣ Wrap exactly as expected: ' " {...} " '
+# 3️⃣ Wrap exactly like expected
+# intDetails='"{...}"'
 int_details_value = f"'\"{json_string}\"'"
 
-# 4️⃣ Build properties content (quotes exactly like expected)
+# 4️⃣ Build properties content
 content = f"""env={env},
 onboarding_project_Name='{onboarding_project_name}'
 Job_name='{job_name}'
@@ -39,8 +39,8 @@ domain='{domain}'
 project_Name='{project_name}'
 """
 
-# 5️⃣ Write file
+# 5️⃣ Always write to env-based file
 file_path = Path(f"{env}.properties")
 file_path.write_text(content)
 
-print(f"✅ {file_path.name} generated with escaped intDetails")
+print(f"✅ Generated {file_path.name}")
