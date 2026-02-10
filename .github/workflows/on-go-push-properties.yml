@@ -27,25 +27,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout MAIN (script lives here)
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
-      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3️⃣ Create feature branch FROM main
-      - name: Create feature branch
+      - name: Create / reset feature branch
         run: |
-          git checkout -B ${{ github.event.inputs.target_branch }} origin/main
+          git checkout -B ${{ github.event.inputs.target_branch }}
 
-      # 4️⃣ Generate properties file (JSON via ENV)
       - name: Generate properties
         env:
           ENV: ${{ github.event.inputs.env }}
@@ -58,16 +54,12 @@ jobs:
         run: |
           python scripts/generate_properties.py
 
-      # 5️⃣ Commit ONLY the properties file
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add uat.properties
-          git commit -m "Add uat properties" || echo "Nothing to commit"
+          git add ${{ github.event.inputs.env }}.properties
+          git commit -m "Add ${{ github.event.inputs.env }} properties" || echo "Nothing to commit"
 
-          git fetch origin
-          git pull --rebase origin feature/initial_load
-          git push origin feature/initial_load
-
+          git push origin ${{ github.event.inputs.target_branch }} --force-with-lease
